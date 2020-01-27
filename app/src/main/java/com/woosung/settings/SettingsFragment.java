@@ -5,7 +5,7 @@ import android.os.Bundle;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
-import androidx.preference.SwitchPreference;
+import androidx.preference.SwitchPreferenceCompat;
 import android.util.Log;
 
 import com.woosung.Constants;
@@ -26,7 +26,7 @@ implements SharedPreferences.OnSharedPreferenceChangeListener {
         final SharedPreferences sh = getPreferenceManager().getSharedPreferences() ;
         String lastUpdated = sh.getString(Constants.LAST_UPDATED,"");
 
-        SwitchPreference pref = (SwitchPreference) findPreference(getString(R.string.contact_sync_key));
+        SwitchPreferenceCompat pref = findPreference(getString(R.string.contact_sync_key));
         pref.setSummaryOn(getString(R.string.contact_sync_summary_act)+" "+lastUpdated);
 
     }
@@ -53,7 +53,7 @@ implements SharedPreferences.OnSharedPreferenceChangeListener {
 
         }else if (key.equals(Constants.LAST_UPDATED)){
             String lastUpdated = sharedPreferences.getString(key,"");
-            SwitchPreference pref = (SwitchPreference) findPreference(getString(R.string.contact_sync_key));
+            SwitchPreferenceCompat pref = findPreference(getString(R.string.contact_sync_key));
             pref.setSummaryOn(getString(R.string.contact_sync_summary_act)+" "+lastUpdated);
         }
 
