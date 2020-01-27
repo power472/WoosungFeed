@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--   안드로이드 9이상 부터 https의 사용을 의무화 함  http를 사용하기 위해서
+    사이트 예외처리를 위하여 아래 세팅 하고 Manifest 파일에서 설정 해 줌  -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

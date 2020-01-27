@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "921374371036",
+    "firebase_url": "https://woosungfeed-2d329.firebaseio.com",
+    "project_id": "woosungfeed-2d329",
+    "storage_bucket": "woosungfeed-2d329.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:921374371036:android:b5f781c2b3c5cbbf269819",
+        "android_client_info": {
+          "package_name": "com.woosung"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "921374371036-qnc27m3be3msmgk38vclqjp335p8k446.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.woosung",
+            "certificate_hash": "c20bdfb937065529e32c0532e9c23f37d4cf9cef"
+          }
+        },
+        {
+          "client_id": "921374371036-8o5dh97bgv7gu3afoj233ug90jijkrbd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1tEyYSQ-TysnhauiWSwintiSujCFm1wg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "921374371036-8o5dh97bgv7gu3afoj233ug90jijkrbd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

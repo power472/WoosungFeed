@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">WoosungFeed</string>
+
+    <string name="url_select">http://css.wsfeed.co.kr/servlet/com.woosung.crm.Select</string>
+    <string name="url_sales">http://css.wsfeed.co.kr/servlet/com.woosung.crm.Sales</string>
+
+    <string name="tab_title_1">판매분석</string>
+    <string name="tab_title_2">일정/활동</string>
+    <string name="tab_title_3">당사고객</string>
+    <string name="tab_title_4">가망고객</string>
+
+    <string name="sales_title_1">구분</string>
+    <string name="sales_title_2">당일</string>
+    <string name="sales_title_3">당월</string>
+    <string name="sales_title_4">전월대비</string>
+    <string name="sales_title_5">전월</string>
+    <string name="sales_title_6">3개월전</string>
+    <string name="sales_title_7">전년</string>
+
+
+    <string name="menu_1">연락처</string>
+    <string name="menu_2">일정</string>
+    <string name="menu_3">설정</string>
+    <string name="menu_4">정보</string>
+
+
+    <string name="about">About</string>
+    <string name="app_version">VERSION: 0.2</string>
+    <string name="contact_me">연락처</string>
+    <string name="made_by">(주)우성사료</string>
+
+    <string name="drawer_open">drawer_open</string>
+    <string name="drawer_close">drawer_close</string>
+
+
+    <!--설정-->
+    <string name="notice_mode">알림 허용</string>
+    <string name="notice_mode_summary_on">알림 메시지, 소리, 진동을 포함한 앱의 알림을 받습니다.</string>
+    <string name="notice_mode_summary_off">앱을 알림을 받지 않습니다.</string>
+    <string name="notice_mode_key">PrefNoticeMode</string>
+
+
+    <string name="contact_sync_key">SyncContacts</string>
+    <string name="contact_sync_summary_off">동기화 사용 안함</string>
+    <string name="contact_sync_title">연락처 동기화</string>
+    <string name="contact_sync_summary_on">동기화 없음</string>
+    <string name="contact_sync_summary_act">마지막 동기화 : </string>
+
+    <string name="description"> </string>
+</resources>

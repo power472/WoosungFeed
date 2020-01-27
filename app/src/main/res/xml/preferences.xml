@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/contact_sync_key"
+            app:summaryOn=""
+            app:summaryOff="@string/contact_sync_summary_off"
+            app:switchTextOff="OFF"
+            app:switchTextOn="ON"
+            app:title="@string/contact_sync_title" />
+
+</PreferenceScreen>
