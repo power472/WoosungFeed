@@ -21,11 +21,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <service android:name=".messages.MyFirebaseMessagingService">
+        <service
+            android:name=".messages.FireBaseMessagingService">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+
+        <service
+            android:name=".messages.FirebaseInstanceIDService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+
         <service android:name=".account.GenericAccountService">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
