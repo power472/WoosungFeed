@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         ActionBar actionBar = getSupportActionBar();
@@ -105,14 +105,14 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        mTabLayout = (TabLayout) findViewById(R.id.layout_tab);
+        mTabLayout = findViewById(R.id.layout_tab);
 
         mTabLayout.addTab(mTabLayout.newTab().setText(getString(R.string.tab_title_1)));
         mTabLayout.addTab(mTabLayout.newTab().setText(getString(R.string.tab_title_2)));
         mTabLayout.addTab(mTabLayout.newTab().setText(getString(R.string.tab_title_3)));
         mTabLayout.addTab(mTabLayout.newTab().setText(getString(R.string.tab_title_4)));
 
-        mViewPager = (ViewPager) findViewById(R.id.pager_content);
+        mViewPager = findViewById(R.id.pager_content);
         mContentPagerAdapter = new ContentsPagerAdapter(getSupportFragmentManager(), mTabLayout.getTabCount());
         mViewPager.setAdapter(mContentPagerAdapter);
 
@@ -131,8 +131,8 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        drawerLayout = (DrawerLayout) findViewById(R.id.dl_main_drawer_root);
-        navigationView = (NavigationView) findViewById(R.id.nv_main_navigation_root);
+        drawerLayout = findViewById(R.id.dl_main_drawer_root);
+        navigationView = findViewById(R.id.nv_main_navigation_root);
         drawerToggle = new ActionBarDrawerToggle(
                 this,
                 drawerLayout,
@@ -183,11 +183,11 @@ public class MainActivity extends AppCompatActivity
                         // Log and toast
                         String msg = getString(R.string.msg_token_fmt, token);
                         Log.d(TAG, msg);
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
 
-        FirebaseMessaging.getInstance().setAutoInitEnabled(true);
+//        FirebaseMessaging.getInstance().setAutoInitEnabled(true);
 
 
     }
@@ -199,8 +199,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-        Intent i = null;
+        Intent i;
         switch (item.getItemId()) {
             case R.id.action_config :
                 i = new Intent(this, SettingsActivity.class);
@@ -225,7 +224,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         drawerToggle.onConfigurationChanged(newConfig);
     }
@@ -240,7 +239,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (drawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
@@ -271,7 +270,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
-            if ( check_result == false ) {
+            if ( !check_result ) {
                 // 거부한 퍼미션이 있다면 앱을 사용할 수 없는 이유를 설명해주고 앱을 종료합니다.2 가지 경우가 있습니다.
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])
                         || ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[1])) {
@@ -317,26 +316,23 @@ public class MainActivity extends AppCompatActivity
     class ContentsPagerAdapter extends FragmentStatePagerAdapter {
         private int mPageCount;
 
-        public ContentsPagerAdapter(FragmentManager fm, int mPageCount) {
+        private ContentsPagerAdapter(FragmentManager fm, int mPageCount) {
             super(fm);
             this.mPageCount = mPageCount;
         }
 
+        @NonNull
         @Override
         public Fragment getItem(int position) {
             switch(position){
                 case 0:
-                    SalesFragment salesFragment = new SalesFragment();
-                    return salesFragment;
+                    return new SalesFragment();
                 case 1:
-                    ActsFragment actsFragment = new ActsFragment();
-                    return actsFragment;
+                    return new ActsFragment();
                 case 2:
-                    CustFragment custFragment = new CustFragment();
-                    return custFragment;
+                    return new CustFragment();
                 case 3:
-                    PropFragment propFragment = new PropFragment();
-                    return propFragment;
+                    return new PropFragment();
                 default:
                     return null;
             }
