@@ -92,10 +92,6 @@ public class ActsFragment extends Fragment {
         });
 
 
-        txtString = rootView.findViewById(R.id.DeptName);
-        NameTask task = new NameTask();
-        task.execute();
-
         return rootView;
     }
 
@@ -106,53 +102,5 @@ public class ActsFragment extends Fragment {
     }
 
 
-
-
-
-
-
-    class NameTask extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... strings) {
-            OkHttpClient client = new OkHttpClient();
-
-            HttpUrl.Builder urlBuilder = HttpUrl.parse(getString(R.string.url_select)).newBuilder();
-            urlBuilder.addEncodedQueryParameter("format", "json");
-            urlBuilder.addEncodedQueryParameter("sqlfilename", "intro");
-            urlBuilder.addEncodedQueryParameter("sqlnumber", "1");
-            urlBuilder.addEncodedQueryParameter("no", "0472");
-            String requestUrl = urlBuilder.build().toString();
-            Request request = new Request.Builder().url(requestUrl).build();
-
-            try {
-                Response response = client.newCall(request).execute();
-                return response.body().string();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-
-            try {
-                JSONArray output1 = (new JSONObject(s)).getJSONObject("contents").getJSONArray("output1");
-                JSONObject row_data = output1.getJSONObject(0).getJSONObject("row_data");
-                String name = row_data.getString("EMPLNAME");
-                txtString.setText(name+"님 반갑습니다");
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-
-            } catch (NullPointerException n) {
-                txtString.setText("이름을 가져오지 못했습니다");
-            }
-
-        }
-
-    }
 
 }

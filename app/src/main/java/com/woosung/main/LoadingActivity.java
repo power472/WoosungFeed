@@ -1,6 +1,7 @@
 package com.woosung.main;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,13 +10,18 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.woosung.R;
 
 import org.json.JSONArray;
@@ -26,9 +32,11 @@ import java.io.IOException;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class LoadingActivity extends AppCompatActivity
@@ -39,6 +47,7 @@ public class LoadingActivity extends AppCompatActivity
     private Context mContext;
     private View mLayout;
     private String telNumber="";
+    private String token="";
 
 
 
@@ -110,10 +119,9 @@ public class LoadingActivity extends AppCompatActivity
 
         }else{
 
-            getPersonalInfo();
+            sendRegistrationToServer();
         }
-
-}
+    }
 
 
 
@@ -141,8 +149,7 @@ public class LoadingActivity extends AppCompatActivity
 
             if ( check_result ) {
                 // 모든 퍼미션을 허용했다면 시작합니다.
-                getPersonalInfo();
-
+                sendRegistrationToServer();
 
             }
             else {
@@ -176,13 +183,12 @@ public class LoadingActivity extends AppCompatActivity
     }
 
 
-
-
-    private void getPersonalInfo(){
+    private void sendRegistrationToServer() {
 
         TelephonyManager mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         if(mTelephonyManager != null){
-            if(ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
+            if(ActivityCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED){
 
             }else if(mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_UNKNOWN
                     || mTelephonyManager.getSimState() == TelephonyManager.SIM_STATE_ABSENT){
@@ -199,73 +205,83 @@ public class LoadingActivity extends AppCompatActivity
             }
         }
 
-        OkHttpClient client = new OkHttpClient();
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(getString(R.string.url_select)).newBuilder();
-        urlBuilder.addEncodedQueryParameter("format", "json");
-        urlBuilder.addEncodedQueryParameter("sqlfilename", "intro");
-        urlBuilder.addEncodedQueryParameter("sqlnumber", "1");
-        urlBuilder.addEncodedQueryParameter("no", telNumber);
 
-        String requestUrl = urlBuilder.build().toString();
-        Request request = new Request.Builder().url(requestUrl).build();
-
-        try{
-            client.newCall(request).enqueue(new Callback() {
-
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.e(TAG, e.getMessage());
-                    call.cancel();
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String s = "";
-                    try {
-
-                        s = response.body().string();
-                        JSONArray output1 = (new JSONObject(s)).getJSONObject("contents").getJSONArray("output1");
-
-                        if(output1.length()>0){
-
-                            JSONObject row_data = output1.getJSONObject(0).getJSONObject("row_data");
-                            Log.d(TAG,row_data.getString("EMPLNAME"));
-                            Log.d(TAG,row_data.getString("DEPTNAME"));
-
-                            SharedPreferences pref = getSharedPreferences("Variable", 0);
-                            SharedPreferences.Editor editor = pref.edit();
-                            editor.putString("EMPLNAME", row_data.getString("EMPLNAME") );
-                            editor.putString("DEPTNAME", row_data.getString("DEPTNAME") );
-                            editor.putString("RANKNAME", row_data.getString("RANKNAME") );
-                            editor.commit();
-
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                            startActivity(intent);
-
-                            finish();
-                        }else{
-                            Snackbar.make(mLayout, telNumber+"은 인증되지 않은 번호입니다. ",
-                                    Snackbar.LENGTH_INDEFINITE).setAction("확인", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    finish();
-                                }
-                            }).show();
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.e(TAG, "getInstanceId failed", task.getException());
+                            return;
                         }
+                        token = task.getResult().getToken();
 
 
-                    } catch (JSONException e) {
-                        Log.e(TAG,s);
-                        Log.e(TAG,e.getMessage());
-                        e.printStackTrace();
+                        OkHttpClient client = new OkHttpClient();
+                        RequestBody formBody = new FormBody.Builder()
+                                .add("tel", telNumber)
+                                .add("token", token)
+                                .build();
+                        Request request = new Request.Builder()
+                                .url(getString(R.string.url_token))
+                                .post(formBody)
+                                .build();
+
+                        client.newCall(request).enqueue(getRegServerCallback);
+
+
                     }
-                }
-            });
-        } catch (Exception e){
-            Log.e(TAG,e.getMessage());
-            e.printStackTrace();
-        }
+                });
 
     }
 
+    private Callback getRegServerCallback = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            Log.e(TAG, "ERROR Message : " + e.getMessage());
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            String s = "";
+            try {
+
+                s = response.body().string();
+                JSONArray output1 = (new JSONObject(s)).getJSONObject("contents").getJSONArray("output1");
+
+                if(output1.length()>0){
+
+                    JSONObject row_data = output1.getJSONObject(0).getJSONObject("row_data");
+
+                    SharedPreferences pref = getSharedPreferences("Variable", 0);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putString("EMPLNAME", row_data.getString("EMPLNAME") );
+                    editor.putString("DEPTNAME", row_data.getString("DEPTNAME") );
+                    editor.putString("RANKNAME", row_data.getString("RANKNAME") );
+                    editor.putString("EMPLCODE", row_data.getString("EMPLCODE") );
+                    editor.commit();
+
+
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+
+                    finish();
+                }else{
+                    Snackbar.make(mLayout, telNumber+"은 인증되지 않은 번호이거나 토큰이 정상적으로 등록되지 않았습니다. ",
+                            Snackbar.LENGTH_INDEFINITE).setAction("확인", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            finish();
+                        }
+                    }).show();
+                }
+
+
+            } catch (JSONException e) {
+                Log.e(TAG,s);
+                Log.e(TAG,e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    };
 }

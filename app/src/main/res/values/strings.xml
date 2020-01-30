@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">WoosungFeed</string>
 
-    <string name="url_select">http://css.wsfeed.co.kr/servlet/com.woosung.crm.Select</string>
-    <string name="url_sales">http://css.wsfeed.co.kr/servlet/com.woosung.crm.Sales</string>
+    <string name="url_select">http://css.wsfeed.co.kr/servlet/com.woosung.android.Select</string>
+    <string name="url_sales">http://css.wsfeed.co.kr/servlet/com.woosung.android.Sales</string>
+    <string name="url_token">http://css.wsfeed.co.kr/servlet/com.woosung.android.SetToken</string>
 
     <string name="tab_title_1">판매분석</string>
     <string name="tab_title_2">일정/활동</string>

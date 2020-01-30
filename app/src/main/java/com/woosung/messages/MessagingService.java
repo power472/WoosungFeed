@@ -1,29 +1,43 @@
 package com.woosung.messages;
 
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.woosung.R;
 import com.woosung.main.MainActivity;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MyFirebaseMessagingService extends FirebaseMessagingService {
-    private static final String TAG = "MyFirebaseMsgService";
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+public class MessagingService extends FirebaseMessagingService {
+    private static final String TAG = "MessagingService";
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -67,17 +81,57 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     /**
      * 새로운 토큰이 생성되는 경우
      **/
-
     @Override
     public void onNewToken(String refreshedToken) {
         super.onNewToken(refreshedToken);
-        Log.e(TAG, "Refreshed token: " + refreshedToken);
-        sendRegistrationToServer(refreshedToken);
+//        Log.e(TAG, "Refreshed token: " + refreshedToken);
+//        sendRegistrationToServer(refreshedToken);
     }
 
+
+    /*
     private void sendRegistrationToServer(String token) {
         Log.e(TAG, "here ! sendRegistrationToServer! token is " + token);
+
+        SharedPreferences pref = getSharedPreferences("Variable", Activity.MODE_PRIVATE);
+        String empl = pref.getString("EMPLCODE", "");
+        if(!empl.equals("")){
+            OkHttpClient client = new OkHttpClient();
+
+            RequestBody formBody = new FormBody.Builder()
+                    .add("empl", empl)
+                    .add("token", token)
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(getString(R.string.url_token))
+                    .post(formBody)
+                    .build();
+
+            client.newCall(request).enqueue(updateTokenCallback);
+        }
     }
+
+    private Callback updateTokenCallback = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+//            Toast.makeText(getApplicationContext(),"ERROR on updating token : "+e.getMessage(),Toast.LENGTH_LONG ).show();
+            Log.e(TAG, "ERROR Message : " + e.getMessage());
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            final String responseData = response.body().string();
+            if(responseData.equals("OK")) {
+                Log.d(TAG, "SetToken :" + responseData);
+            }else{
+//                Toast.makeText(getApplicationContext(),"ERROR on updating token : "+responseData,Toast.LENGTH_LONG ).show();
+                Log.e(TAG, "ERROR Message : " + responseData);
+            }
+        }
+    };
+
+    */
 
 
     private void sendNotification(Map<String, String> data) {

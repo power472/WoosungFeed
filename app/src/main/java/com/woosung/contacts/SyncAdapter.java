@@ -10,6 +10,7 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.woosung.Constants;
 import com.woosung.R;
@@ -106,8 +107,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
                     @Override
                     public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
                         Log.e(TAG,"연락처 업데이트 에러: "+e.getMessage());
+                        Toast.makeText(getContext(),"연착처 동기화하는 중 에러 (+"+e.getMessage()+") 다시 시도해 주십시요.",Toast.LENGTH_LONG).show();
+
                         call.cancel();
                     }
 
