@@ -45,30 +45,32 @@ public class MessagingService extends FirebaseMessagingService {
         Log.e(TAG, remoteMessage.getFrom());
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
-            Log.e(TAG, "Message data payload: " + remoteMessage.getData());
+            Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             handleNow();
         }
 
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
-            Log.e(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
+            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
 
-            String getMessage = remoteMessage.getNotification().getBody();
-            if (TextUtils.isEmpty(getMessage)) {
+            String sMessage = remoteMessage.getNotification().getBody();
+            String sTitle = remoteMessage.getNotification().getTitle();
+            if (TextUtils.isEmpty(sMessage)) {
                 Log.e(TAG, "ERR: Message data is empty...");
             } else {
                 Map<String, String> mapMessage = new HashMap<>();
-                assert getMessage != null;
-                mapMessage.put("key", getMessage);
+                assert sMessage != null;
+                mapMessage.put("title", sTitle);
+                mapMessage.put("message", sMessage);
 
 
                 sendNotification(mapMessage);
 
                 // Broadcast Data Sending Test
-                Intent intent = new Intent("alert_data");
-                intent.putExtra("msg", getMessage);
-                LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+                //Intent intent = new Intent("MESSAGE_LIST");
+                //intent.putExtra("msg", sMessage);
+                //LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
             }
         }
     }
@@ -84,60 +86,14 @@ public class MessagingService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String refreshedToken) {
         super.onNewToken(refreshedToken);
-//        Log.e(TAG, "Refreshed token: " + refreshedToken);
-//        sendRegistrationToServer(refreshedToken);
     }
-
-
-    /*
-    private void sendRegistrationToServer(String token) {
-        Log.e(TAG, "here ! sendRegistrationToServer! token is " + token);
-
-        SharedPreferences pref = getSharedPreferences("Variable", Activity.MODE_PRIVATE);
-        String empl = pref.getString("EMPLCODE", "");
-        if(!empl.equals("")){
-            OkHttpClient client = new OkHttpClient();
-
-            RequestBody formBody = new FormBody.Builder()
-                    .add("empl", empl)
-                    .add("token", token)
-                    .build();
-
-            Request request = new Request.Builder()
-                    .url(getString(R.string.url_token))
-                    .post(formBody)
-                    .build();
-
-            client.newCall(request).enqueue(updateTokenCallback);
-        }
-    }
-
-    private Callback updateTokenCallback = new Callback() {
-        @Override
-        public void onFailure(Call call, IOException e) {
-//            Toast.makeText(getApplicationContext(),"ERROR on updating token : "+e.getMessage(),Toast.LENGTH_LONG ).show();
-            Log.e(TAG, "ERROR Message : " + e.getMessage());
-        }
-
-        @Override
-        public void onResponse(Call call, Response response) throws IOException {
-            final String responseData = response.body().string();
-            if(responseData.equals("OK")) {
-                Log.d(TAG, "SetToken :" + responseData);
-            }else{
-//                Toast.makeText(getApplicationContext(),"ERROR on updating token : "+responseData,Toast.LENGTH_LONG ).show();
-                Log.e(TAG, "ERROR Message : " + responseData);
-            }
-        }
-    };
-
-    */
 
 
     private void sendNotification(Map<String, String> data) {
         int noti_id = 1;
-        String getMessage = "";
-        Intent intent = new Intent(this, MainActivity.class);
+        String sMessage = "";
+        String sTitle = "";
+        Intent intent = new Intent(this, MessagelistActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("notification_id", 0);
@@ -145,8 +101,10 @@ public class MessagingService extends FirebaseMessagingService {
         // Push로 받은 데이터를 그대로 다시 intent에 넣어준다.
         if (data != null && data.size() > 0) {
             for (String key : data.keySet()) {
-                getMessage = data.get(key);
-                intent.putExtra(key, getMessage);
+                if(key.equals("title")) sTitle = data.get(key);
+                else if(key.equals("message")) sMessage = data.get(key);
+
+                intent.putExtra(key, sMessage);
             }
         }
 
@@ -156,8 +114,8 @@ public class MessagingService extends FirebaseMessagingService {
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this, channelId)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("FCM Message Test !")
-                        .setContentText(getMessage)
+                        .setContentTitle(sTitle)
+                        .setContentText(sMessage)
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
                         .setContentIntent(pendingIntent);

@@ -42,6 +42,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.woosung.R;
 import com.woosung.about.AboutActivity;
 import com.woosung.contacts.SyncUtils;
+import com.woosung.messages.MessagelistActivity;
 import com.woosung.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity
@@ -181,10 +182,17 @@ public class MainActivity extends AppCompatActivity
                 i = new Intent(this, SettingsActivity.class);
                 startActivity(i);
                 break;
+
             case R.id.action_about :
                 i = new Intent(this, AboutActivity.class);
                 startActivity(i);
                 break;
+
+            case R.id.action_message :
+                i = new Intent(this, MessagelistActivity.class);
+                startActivity(i);
+                break;
+
             default :
                 break;
         }
