@@ -2,21 +2,17 @@ package com.woosung.main;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -31,18 +27,13 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.woosung.R;
 import com.woosung.about.AboutActivity;
 import com.woosung.contacts.SyncUtils;
-import com.woosung.messages.MessagelistActivity;
+import com.woosung.messages.MessageActivity;
 import com.woosung.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity
@@ -189,7 +180,7 @@ public class MainActivity extends AppCompatActivity
                 break;
 
             case R.id.action_message :
-                i = new Intent(this, MessagelistActivity.class);
+                i = new Intent(this, MessageActivity.class);
                 startActivity(i);
                 break;
 

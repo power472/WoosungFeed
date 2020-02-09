@@ -83,7 +83,7 @@
             android:name=".about.AboutActivity"
             android:label="@string/menu_4"
             android:parentActivityName=".main.MainActivity" />
-        <activity android:name=".messages.MessagelistActivity">
+        <activity android:name=".messages.MessageActivity">
             <intent-filter>
                 <action android:name="MESSAGE_LIST"/>
                 <category android:name="android.intent.category.DEFAULT"/>
