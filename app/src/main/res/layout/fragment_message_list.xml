@@ -10,4 +10,4 @@
     android:layout_marginRight="16dp"
     app:layoutManager="LinearLayoutManager"
     tools:context=".messages.MessageFragment"
-    tools:listitem="@layout/fragment_message" />
+    tools:listitem="@layout/fragment_message_item" />

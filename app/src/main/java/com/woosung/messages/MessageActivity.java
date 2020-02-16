@@ -7,7 +7,8 @@ import android.os.Bundle;
 
 import com.woosung.appDefault.AppDefaultActivity;
 
-public class MessageActivity extends AppDefaultActivity {
+public class MessageActivity extends AppDefaultActivity
+        implements MessageFragment.OnListFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,5 +20,11 @@ public class MessageActivity extends AppDefaultActivity {
     @Override
     protected Fragment createInitialFragment() {
         return MessageFragment.newInstance();
+    }
+
+    @Override
+    public void onListFragmentInteraction(Message item) {
+
+
     }
 }
