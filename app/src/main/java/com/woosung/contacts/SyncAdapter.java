@@ -46,12 +46,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     /**
      * Network connection timeout, in milliseconds.
      */
-    private static final int NET_CONNECT_TIMEOUT_MILLIS = 15000;  // 15 seconds
+    private static final int NET_CONNECT_TIMEOUT_MILLIS = 30000;  // 15 seconds
 
     /**
      * Network read timeout, in milliseconds.
      */
-    private static final int NET_READ_TIMEOUT_MILLIS = 10000;  // 10 seconds
+    private static final int NET_READ_TIMEOUT_MILLIS = 20000;  // 10 seconds
 
 
 
@@ -129,10 +129,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                                 // update platform contacts.
                                 ContactManager.syncContacts(mContext, users);
 
-
                                 OkHttpClient client = new OkHttpClient();
                                 for (final User user : users) {
-                                    if(user.isDeleted()==false){
+                                    if(!user.isDeleted()){
 
                                         String userId = user.getUserId();
                                         Request request = new Request.Builder().url("http://ica.wsfeed.co.kr/Image/picture/"+userId+".bmp").build();
