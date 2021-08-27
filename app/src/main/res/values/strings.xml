@@ -20,8 +20,8 @@
 
 
     <string name="menu_1">연락처</string>
-    <string name="menu_2">일정</string>
-    <string name="menu_3">설정</string>
+    <string name="menu_2">알림</string>
+    <string name="menu_3">환경설정</string>
     <string name="menu_4">정보</string>
 
 
@@ -49,7 +49,7 @@
 
     <!--FCM 메시지-->
     <string name="fcm_message">알림</string>
-    <string name="default_notification_channel_id">channel</string>
+    <string name="default_notification_channel_id">기본</string>
 
     <string name="msg_token_fmt">현재토큰: %s</string>
 

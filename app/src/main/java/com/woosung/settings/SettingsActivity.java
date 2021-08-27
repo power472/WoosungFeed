@@ -1,6 +1,5 @@
 package com.woosung.settings;
 
-import android.app.FragmentManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -41,7 +40,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.content, new SettingsFragment())
+                .replace(R.id.message, new SettingsFragment())
                 .commit();
 
     }
