@@ -128,7 +128,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                             if(users.size()>0){
                                 // update platform contacts.
                                 ContactManager.syncContacts(mContext, users);
-
+/* 서버 방화벽 관계로 잠시 중단
                                 OkHttpClient client = new OkHttpClient();
                                 for (final User user : users) {
                                     if(!user.isDeleted()){
@@ -145,7 +145,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                                     }
 
                                 }
-
+*/
                             }else{
                                 Log.i(TAG,"연락처 업데이트 인원 없음");
                             }

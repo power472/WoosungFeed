@@ -33,8 +33,8 @@ import com.woosung.account.GenericAccountService;
  */
 public class SyncUtils {
 
-    //private static final long SYNC_FREQUENCY = 12 * 60 * 60;  // 12 hour (in seconds)
-    private static final long SYNC_FREQUENCY = 5 * 60;
+    private static final long SYNC_FREQUENCY = 24 * 60 * 60;  // 24 hour (in seconds)
+    //private static final long SYNC_FREQUENCY = 5 * 60;
 
 
     /**

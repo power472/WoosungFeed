@@ -1,0 +1,238 @@
+Index: app/src/main/java/com/woosung/contacts/SyncAdapter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.woosung.contacts;\r\n\r\nimport android.accounts.Account;\r\nimport android.accounts.AccountManager;\r\nimport android.content.AbstractThreadedSyncAdapter;\r\nimport android.content.ContentProviderClient;\r\nimport android.content.ContentResolver;\r\nimport android.content.Context;\r\nimport android.content.SyncResult;\r\nimport android.os.Bundle;\r\nimport androidx.preference.PreferenceManager;\r\nimport android.util.Log;\r\nimport android.widget.Toast;\r\n\r\nimport com.woosung.Constants;\r\nimport com.woosung.R;\r\n\r\nimport org.jetbrains.annotations.NotNull;\r\nimport org.json.JSONArray;\r\nimport org.json.JSONException;\r\nimport org.json.JSONObject;\r\n\r\nimport java.io.IOException;\r\nimport java.text.SimpleDateFormat;\r\nimport java.util.ArrayList;\r\nimport java.util.Date;\r\n\r\nimport okhttp3.Call;\r\nimport okhttp3.Callback;\r\nimport okhttp3.HttpUrl;\r\nimport okhttp3.OkHttpClient;\r\nimport okhttp3.Request;\r\nimport okhttp3.Response;\r\n\r\npublic class SyncAdapter extends AbstractThreadedSyncAdapter {\r\n    private static final String TAG = \"SyncAdapter\";\r\n\r\n    /**\r\n     * URL to fetch content from during a sync.\r\n     *\r\n     * <p>This points to the Android Developers Blog. (Side note: We highly recommend reading the\r\n     * Android Developer Blog to stay up to date on the latest Android platform developments!)\r\n     */\r\n\r\n\r\n    /**\r\n     * Network connection timeout, in milliseconds.\r\n     */\r\n    private static final int NET_CONNECT_TIMEOUT_MILLIS = 30000;  // 15 seconds\r\n\r\n    /**\r\n     * Network read timeout, in milliseconds.\r\n     */\r\n    private static final int NET_READ_TIMEOUT_MILLIS = 20000;  // 10 seconds\r\n\r\n\r\n\r\n    /**\r\n     * Content resolver, for performing database operations.\r\n     */\r\n    private final AccountManager mAccountManager;\r\n    private final Context mContext;\r\n    private final ContentResolver mContentResolver;\r\n\r\n\r\n\r\n    public SyncAdapter(Context context, boolean autoInitialize) {\r\n        super(context, autoInitialize);\r\n        mContentResolver = context.getContentResolver();\r\n        mContext = context;\r\n        mAccountManager = AccountManager.get(context);\r\n\r\n        Log.d(TAG, \"Sync Adapter created.\");\r\n    }\r\n\r\n\r\n\r\n    @Override\r\n    public void onPerformSync(Account account, Bundle extras,\r\n                              String authority, ContentProviderClient provider,\r\n                              SyncResult syncResult) {\r\n        Log.d(TAG, \"Sync Adapter called.\");\r\n\r\n        final ArrayList<User> users = new ArrayList<User>();\r\n\r\n        try {\r\n\r\n            String lastUpdated = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(Constants.LAST_UPDATED,\"\");\r\n            String sqlnumber = \"1\";\r\n            if(!lastUpdated.equals(\"\")) sqlnumber+=\",3\";\r\n\r\n            OkHttpClient client = new OkHttpClient();\r\n            HttpUrl.Builder urlBuilder = HttpUrl.parse(mContext.getString(R.string.url_select)).newBuilder();\r\n            urlBuilder.addEncodedQueryParameter(\"format\", \"json\");\r\n            urlBuilder.addEncodedQueryParameter(\"sqlfilename\", \"contacts\");\r\n            urlBuilder.addEncodedQueryParameter(\"sqlnumber\", sqlnumber);\r\n            urlBuilder.addEncodedQueryParameter(\"last\", lastUpdated);\r\n\r\n\r\n\r\n\r\n            String requestUrl = urlBuilder.build().toString();\r\n            Request request = new Request.Builder().url(requestUrl).build();\r\n\r\n            try {\r\n                client.newCall(request).enqueue(new Callback() {\r\n\r\n                    @Override\r\n                    public void onFailure(@NotNull Call call, @NotNull IOException e) {\r\n                        Log.e(TAG,\"연락처 업데이트 에러: \"+e.getMessage());\r\n                        Toast.makeText(getContext(),\"연착처 동기화하는 중 에러 (+\"+e.getMessage()+\") 다시 시도해 주십시요.\",Toast.LENGTH_LONG).show();\r\n\r\n                        call.cancel();\r\n                    }\r\n\r\n                    @Override\r\n                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {\r\n\r\n                        try {\r\n\r\n                            String rtn = response.body().string();\r\n                            JSONArray output = (new JSONObject(rtn)).getJSONObject(\"contents\").getJSONArray(\"output1\");\r\n                            for (int i = 0; i < output.length(); i++) {\r\n                                users.add(User.valueOf(output.getJSONObject(i).getJSONObject(\"row_data\")));\r\n                            }\r\n\r\n\r\n                            if(users.size()>0){\r\n                                // update platform contacts.\r\n                                ContactManager.syncContacts(mContext, users);\r\n\r\n                                OkHttpClient client = new OkHttpClient();\r\n                                for (final User user : users) {\r\n                                    if(!user.isDeleted()){\r\n\r\n                                        String userId = user.getUserId();\r\n                                        Request request = new Request.Builder().url(\"http://ica.wsfeed.co.kr/Image/picture/\"+userId+\".bmp\").build();\r\n                                        try {\r\n                                            Response resp = client.newCall(request).execute();\r\n                                            ContactManager.writeDisplayPhoto(mContext, userId, resp.body().bytes());\r\n\r\n                                        } catch (Exception e) {\r\n                                            Log.e(TAG, e.getMessage()+\" http://ica.wsfeed.co.kr/Image/picture/\"+userId+\".bmp\");\r\n                                        }\r\n                                    }\r\n\r\n                                }\r\n\r\n                            }else{\r\n                                Log.i(TAG,\"연락처 업데이트 인원 없음\");\r\n                            }\r\n\r\n\r\n                            // 설정창에 최근 업데이트 일시 표시 위해\r\n                            SimpleDateFormat formater = new SimpleDateFormat(\"yyyy-MM-dd HH:mm:ss\");\r\n                            PreferenceManager.getDefaultSharedPreferences(getContext()).edit()\r\n                                    .putString(Constants.LAST_UPDATED, formater.format(new Date())).commit();\r\n\r\n\r\n\r\n                        } catch (JSONException e) {\r\n                            Log.e(TAG, e.getMessage());\r\n                        }\r\n                    }\r\n                });\r\n            } catch (Exception e) {\r\n                Log.e(TAG, e.getMessage());\r\n            }\r\n        }catch(Exception e){\r\n            Log.e(TAG, e.getMessage());\r\n        }\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n        Log.i(TAG, \"Network synchronization complete\");\r\n\r\n    }\r\n\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/woosung/contacts/SyncAdapter.java b/app/src/main/java/com/woosung/contacts/SyncAdapter.java
+--- a/app/src/main/java/com/woosung/contacts/SyncAdapter.java	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/app/src/main/java/com/woosung/contacts/SyncAdapter.java	(date 1629782224834)
+@@ -128,7 +128,7 @@
+                             if(users.size()>0){
+                                 // update platform contacts.
+                                 ContactManager.syncContacts(mContext, users);
+-
++/* 서버 방화벽 관계로 잠시 중단
+                                 OkHttpClient client = new OkHttpClient();
+                                 for (final User user : users) {
+                                     if(!user.isDeleted()){
+@@ -145,7 +145,7 @@
+                                     }
+ 
+                                 }
+-
++*/
+                             }else{
+                                 Log.i(TAG,"연락처 업데이트 인원 없음");
+                             }
+Index: app/src/main/java/com/woosung/contacts/SyncUtils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>/*\r\n * Copyright 2013 Google Inc.\r\n *\r\n * Licensed under the Apache License, Version 2.0 (the \"License\");\r\n * you may not use this file except in compliance with the License.\r\n * You may obtain a copy of the License at\r\n *\r\n *      http://www.apache.org/licenses/LICENSE-2.0\r\n *\r\n * Unless required by applicable law or agreed to in writing, software\r\n * distributed under the License is distributed on an \"AS IS\" BASIS,\r\n * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\r\n * See the License for the specific language governing permissions and\r\n * limitations under the License.\r\n */\r\n\r\npackage com.woosung.contacts;\r\n\r\nimport android.accounts.Account;\r\nimport android.accounts.AccountManager;\r\nimport android.annotation.TargetApi;\r\nimport android.content.ContentResolver;\r\nimport android.content.Context;\r\nimport android.os.Build;\r\nimport android.os.Bundle;\r\nimport androidx.preference.PreferenceManager;\r\n\r\nimport com.woosung.Constants;\r\nimport com.woosung.account.GenericAccountService;\r\n\r\n/**\r\n * Static helper methods for working with the sync framework.\r\n */\r\npublic class SyncUtils {\r\n\r\n    //private static final long SYNC_FREQUENCY = 12 * 60 * 60;  // 12 hour (in seconds)\r\n    private static final long SYNC_FREQUENCY = 5 * 60;\r\n\r\n\r\n    /**\r\n     * Create an entry for this application in the system account list, if it isn't already there.\r\n     *\r\n     * @param context Context\r\n     */\r\n    @TargetApi(Build.VERSION_CODES.FROYO)\r\n    public static void CreateSyncAccount(Context context) {\r\n\r\n        boolean newAccount = false;\r\n\r\n        //이전에 연락처동기화를 한적 있다 없다\r\n        boolean setupComplete = false;\r\n        if(!PreferenceManager\r\n                .getDefaultSharedPreferences(context).getString(Constants.LAST_UPDATED, \"\").equals(\"\")) setupComplete = true;\r\n\r\n        // Create account, if it's missing. (Either first run, or user has deleted account.)\r\n        Account account = GenericAccountService.GetAccount(Constants.ACCOUNT_TYPE);\r\n        AccountManager accountManager =\r\n                (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);\r\n        if (accountManager.addAccountExplicitly(account, null, null)) {\r\n            // Inform the system that this account supports sync\r\n            ContentResolver.setIsSyncable(account, Constants.CONTENT_AUTHORITY, 1);\r\n            // Inform the system that this account is eligible for auto sync when the network is up\r\n            ContentResolver.setSyncAutomatically(account, Constants.CONTENT_AUTHORITY, true);\r\n            // Recommend a schedule for automatic synchronization. The system may modify this based\r\n            // on other scheduled syncs and network utilization.\r\n            ContentResolver.addPeriodicSync(\r\n                    account, Constants.CONTENT_AUTHORITY, new Bundle(),SYNC_FREQUENCY);\r\n            newAccount = true;\r\n        }\r\n\r\n        // Schedule an initial sync if we detect problems with either our account or our local\r\n        // data has been deleted. (Note that it's possible to clear app data WITHOUT affecting\r\n        // the account list, so wee need to check both.)\r\n\r\n        if (newAccount || !setupComplete) {\r\n            TriggerRefresh();\r\n        }\r\n    }\r\n\r\n\r\n    /**\r\n     * Helper method to trigger an immediate sync (\"refresh\").\r\n     *\r\n     * <p>This should only be used when we need to preempt the normal sync schedule. Typically, this\r\n     * means the user has pressed the \"refresh\" button.\r\n     *\r\n     * Note that SYNC_EXTRAS_MANUAL will cause an immediate sync, without any optimization to\r\n     * preserve battery life. If you know new data is available (perhaps via a GCM notification),\r\n     * but the user is not actively waiting for that data, you should omit this flag; this will give\r\n     * the OS additional freedom in scheduling your sync request.\r\n     */\r\n    public static void TriggerRefresh() {\r\n        Bundle b = new Bundle();\r\n        // Disable sync backoff and ignore sync preferences. In other words...perform sync NOW!\r\n        b.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);\r\n        b.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);\r\n        ContentResolver.requestSync(\r\n                GenericAccountService.GetAccount(Constants.ACCOUNT_TYPE), // Sync account\r\n                Constants.CONTENT_AUTHORITY,                 // Content authority\r\n                b);                                             // Extras\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/woosung/contacts/SyncUtils.java b/app/src/main/java/com/woosung/contacts/SyncUtils.java
+--- a/app/src/main/java/com/woosung/contacts/SyncUtils.java	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/app/src/main/java/com/woosung/contacts/SyncUtils.java	(date 1629783316746)
+@@ -33,8 +33,8 @@
+  */
+ public class SyncUtils {
+ 
+-    //private static final long SYNC_FREQUENCY = 12 * 60 * 60;  // 12 hour (in seconds)
+-    private static final long SYNC_FREQUENCY = 5 * 60;
++    private static final long SYNC_FREQUENCY = 24 * 60 * 60;  // 24 hour (in seconds)
++    //private static final long SYNC_FREQUENCY = 5 * 60;
+ 
+ 
+     /**
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\r\n\r\nbuildscript {\r\n    repositories {\r\n        google()\r\n        jcenter()\r\n        \r\n    }\r\n    dependencies {\r\n        classpath 'com.android.tools.build:gradle:3.5.3'\r\n        classpath 'com.google.gms:google-services:4.3.3'\r\n        // NOTE: Do not place your application dependencies here; they belong\r\n        // in the individual module build.gradle files\r\n    }\r\n}\r\n\r\nallprojects {\r\n    repositories {\r\n        google()\r\n        jcenter()\r\n        \r\n    }\r\n}\r\n\r\ntask clean(type: Delete) {\r\n    delete rootProject.buildDir\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle b/build.gradle
+--- a/build.gradle	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/build.gradle	(date 1628032382927)
+@@ -7,7 +7,7 @@
+         
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:3.5.3'
++        classpath 'com.android.tools.build:gradle:7.0.0'
+         classpath 'com.google.gms:google-services:4.3.3'
+         // NOTE: Do not place your application dependencies here; they belong
+         // in the individual module build.gradle files
+Index: .idea/runConfigurations.xml
+===================================================================
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+deleted file mode 100644
+--- a/.idea/runConfigurations.xml	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ /dev/null	(revision d51ddf686aa552352b81c65261c9de936a21a269)
+@@ -1,12 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="RunConfigurationProducerService">
+-    <option name="ignoredProducers">
+-      <set>
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer" />
+-      </set>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+Index: .idea/compiler.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/compiler.xml b/.idea/compiler.xml
+new file mode 100644
+--- /dev/null	(date 1627368014714)
++++ b/.idea/compiler.xml	(date 1627368014714)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="CompilerConfiguration">
++    <bytecodeTargetLevel target="11" />
++  </component>
++</project>
+\ No newline at end of file
+Index: gradle/wrapper/gradle-wrapper.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#Sun Jan 26 23:41:08 KST 2020\r\ndistributionBase=GRADLE_USER_HOME\r\ndistributionPath=wrapper/dists\r\nzipStoreBase=GRADLE_USER_HOME\r\nzipStorePath=wrapper/dists\r\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-5.4.1-all.zip\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>x-windows-949
+===================================================================
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+--- a/gradle/wrapper/gradle-wrapper.properties	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/gradle/wrapper/gradle-wrapper.properties	(date 1628032382384)
+@@ -3,4 +3,4 @@
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-5.4.1-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-7.0.2-all.zip
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"GradleSettings\">\r\n    <option name=\"linkedExternalProjectsSettings\">\r\n      <GradleProjectSettings>\r\n        <compositeConfiguration>\r\n          <compositeBuild compositeDefinitionSource=\"SCRIPT\" />\r\n        </compositeConfiguration>\r\n        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\r\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\r\n        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\r\n        <option name=\"testRunner\" value=\"PLATFORM\" />\r\n      </GradleProjectSettings>\r\n    </option>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/gradle.xml b/.idea/gradle.xml
+--- a/.idea/gradle.xml	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/.idea/gradle.xml	(date 1627518939252)
+@@ -1,15 +1,20 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
++  <component name="GradleMigrationSettings" migrationVersion="1" />
+   <component name="GradleSettings">
+     <option name="linkedExternalProjectsSettings">
+       <GradleProjectSettings>
+-        <compositeConfiguration>
+-          <compositeBuild compositeDefinitionSource="SCRIPT" />
+-        </compositeConfiguration>
++        <option name="delegatedBuild" value="false" />
++        <option name="testRunner" value="GRADLE" />
+         <option name="distributionType" value="DEFAULT_WRAPPED" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
++        <option name="modules">
++          <set>
++            <option value="$PROJECT_DIR$" />
++            <option value="$PROJECT_DIR$/app" />
++          </set>
++        </option>
+         <option name="resolveModulePerSourceSet" value="false" />
+-        <option name="testRunner" value="PLATFORM" />
+       </GradleProjectSettings>
+     </option>
+   </component>
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_1_7\" project-jdk-name=\"1.8\" project-jdk-type=\"JavaSDK\">\r\n    <output url=\"file://$PROJECT_DIR$/build/classes\" />\r\n  </component>\r\n  <component name=\"ProjectType\">\r\n    <option name=\"id\" value=\"Android\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision d51ddf686aa552352b81c65261c9de936a21a269)
++++ b/.idea/misc.xml	(date 1627368014675)
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="1.8" project-jdk-type="JavaSDK">
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+     <output url="file://$PROJECT_DIR$/build/classes" />
+   </component>
+   <component name="ProjectType">
+Index: .idea/jarRepositories.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/jarRepositories.xml b/.idea/jarRepositories.xml
+new file mode 100644
+--- /dev/null	(date 1627438613146)
++++ b/.idea/jarRepositories.xml	(date 1627438613146)
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="RemoteRepositoriesConfiguration">
++    <remote-repository>
++      <option name="id" value="central" />
++      <option name="name" value="Maven Central repository" />
++      <option name="url" value="https://repo1.maven.org/maven2" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="jboss.community" />
++      <option name="name" value="JBoss Community repository" />
++      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="BintrayJCenter" />
++      <option name="name" value="BintrayJCenter" />
++      <option name="url" value="https://jcenter.bintray.com/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="Google" />
++      <option name="name" value="Google" />
++      <option name="url" value="https://dl.google.com/dl/android/maven2/" />
++    </remote-repository>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/deploymentTargetDropDown.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/deploymentTargetDropDown.xml b/.idea/deploymentTargetDropDown.xml
+new file mode 100644
+--- /dev/null	(date 1628035298051)
++++ b/.idea/deploymentTargetDropDown.xml	(date 1628035298051)
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="deploymentTargetDropDown">
++    <runningDeviceTargetSelectedWithDropDown>
++      <Target>
++        <type value="RUNNING_DEVICE_TARGET" />
++        <deviceKey>
++          <Key>
++            <type value="SERIAL_NUMBER" />
++            <value value="R3CR30LR7BK" />
++          </Key>
++        </deviceKey>
++      </Target>
++    </runningDeviceTargetSelectedWithDropDown>
++    <timeTargetWasSelectedWithDropDown value="2021-08-03T23:59:14.780528Z" />
++  </component>
++</project>
+\ No newline at end of file
